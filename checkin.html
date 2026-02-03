@@ -17,24 +17,17 @@
       background: #ffffff;
       border-radius: 16px;
       padding: 24px;
-      max-width: 420px;
+      max-width: 520px;
       margin: 0 auto;
       box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
-    #staffQR {
-      display: block;
-      width: 100%;
-      max-width: 360px;
-      height: auto;
-      margin: 12px auto 0;
-    }
     h1 {
       font-size: 22px;
-      margin-bottom: 8px;
+      margin: 0 0 8px;
     }
     .event {
       font-weight: bold;
-      margin-bottom: 16px;
+      margin: 0 0 16px;
     }
     .notice {
       background: #fff3cd;
@@ -42,15 +35,30 @@
       padding: 12px;
       margin: 16px 0;
       font-size: 14px;
+      line-height: 1.5;
+    }
+    #staffBC {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      margin: 10px auto 0;
     }
     small {
+      display: block;
       color: #666;
       font-size: 12px;
+      margin-top: 10px;
+      line-height: 1.4;
     }
     #debug {
       margin-top: 10px;
       color: #666;
       font-size: 12px;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -58,10 +66,7 @@
 <body>
   <div class="card">
     <h1>🎫 次回ドリンク割引</h1>
-
-    <div class="event">
-      2/24 LIVE 再来場特典
-    </div>
+    <div class="event">2/24 LIVE 再来場特典</div>
 
     <p>
       この画面を<br>
@@ -69,48 +74,54 @@
     </p>
 
     <div class="notice">
-      2/24の来場時に<br>
-      この画面を見せると<strong>限定1回</strong><br>
-      <strong>ドリンク割引</strong>が使えます 🍺
+      2/24の来場時にこの画面を見せると<br>
+      <strong>ドリンク割引</strong>が使えます 🍺（限定1回）
     </div>
 
-    <p><small>※ スタッフが読み取ります（お客様は操作不要）</small></p>
-    <img id="staffQR" alt="staff code">
+    <small>※ スタッフが読み取ります（お客様は操作不要）</small>
+    <img id="staffBC" alt="スタッフ読み取り用バーコード">
 
     <div id="debug"></div>
 
-    <p><small>この画面は再発行できません</small></p>
+    <small>
+      うまく読み取れない場合：<br>
+      下のコード（<span class="mono">token</span>）をスタッフが手入力してもOK
+    </small>
   </div>
 
   <script>
-    // ① spotはURLの値をそのまま使う（コード変更不要）
-    // 例: checkin.html?spot=st  / ?spot=en  / ?spot=dr  / ?spot=ch
+    // --- spot：URLで指定（コードは運用で変えられる） ---
+    // 例: checkin.html?spot=st / ?spot=en / ?spot=dr / ?spot=ch
     const params = new URLSearchParams(window.location.search);
-    const spot = (params.get("spot") || "uk").slice(0, 12); // 長すぎ事故防止（最大12文字）
+    let spot = (params.get("spot") || "uk").toLowerCase();
+    spot = spot.replace(/[^a-z0-9]/g, "").slice(0, 2); // 2文字に制限（短く保つ）
 
-    // ② uidは端末に保存（6文字）
+    // --- uid：端末に保存（5文字） ---
     let uid = localStorage.getItem("otoniwa_uid");
     if (!uid) {
-      uid = Math.random().toString(36).substring(2, 8); // 6文字
+      uid = Math.random().toString(36).substring(2, 7); // 5文字
       localStorage.setItem("otoniwa_uid", uid);
     }
 
-    // ③ スタッフが読むURL（短いほどバーコードが太くなる）
-    const redeemUrl =
-      "https://nakanakaly.github.io/otoniwa-checkin/redeem.html" +
-      `?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
+    // --- token：7文字（uid5 + spot2） ---
+    const token = `${uid}${spot}`;
 
-    // ④ バーコード生成（Code128）— 中身は uid だけ
-    const img = document.getElementById("staffQR");
+    // --- スタッフが開くURL（短いクエリ名 c を使う） ---
+    const staffUrl =
+      `https://nakanakaly.github.io/otoniwa-checkin/redeem.html?c=${encodeURIComponent(token)}`;
+
+    // --- バーコード生成（Code128） ---
+    // もしまだ読み取りが厳しければ、code=PDF417 に変えるとかなり短くなる
+    const img = document.getElementById("staffBC");
     img.src =
       "https://barcode.tec-it.com/barcode.ashx" +
-      "?data=" + encodeURIComponent(uid) +
+      "?data=" + encodeURIComponent(staffUrl) +
       "&code=Code128" +
       "&translate-esc=on";
-    
-    // ⑤ 目視確認（任意）
-    document.getElementById("debug").textContent = `code: ${uid}-${spot}`;
 
+    // --- 目視用表示（現場の保険） ---
+    document.getElementById("debug").innerHTML =
+      `token: <span class="mono">${token}</span>　/ spot: <span class="mono">${spot}</span>`;
   </script>
 </body>
 </html>
