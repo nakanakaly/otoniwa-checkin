@@ -3,94 +3,207 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>割引チェック</title>
+  <title>割引チェック（スタッフ用）</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 18px;
-      max-width: 520px;
-      margin: 0 auto;
-      box-shadow: 0 6px 20px rgba(0,0,0,.08);
-      text-align: center;
-    }
-    h1 { font-size: 18px; margin: 0 0 10px; }
-    .ok { color:#0a7a2f; font-weight: 800; }
-    .ng { color:#b00020; font-weight: 800; }
-    .meta {
-      color: #666;
-      font-size: 12px;
-      margin-top: 10px;
-      word-break: break-all;
-      line-height: 1.5;
-    }
-    .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-weight: 700;
-    }
+    body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#f6f6f6;margin:0;padding:18px 14px 28px;color:#111;}
+    .card{background:#fff;border-radius:22px;padding:18px;max-width:720px;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.07);}
+    h1{font-size:18px;margin:6px 0 10px;text-align:center;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin:10px 0 8px;}
+    .pin{flex:1 1 220px;font-size:20px;padding:12px 12px;border-radius:14px;border:2px solid #ddd;text-align:center;letter-spacing:.12em;box-sizing:border-box;outline:none;}
+    .btn{flex:0 0 auto;font-size:16px;font-weight:900;padding:12px 14px;border-radius:14px;border:none;background:#111;color:#fff;}
+    .btn.secondary{background:#666;}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;margin-left:8px;vertical-align:middle;}
+    .locked{background:#ffe1e1;color:#7b0010;}
+    .unlocked{background:#e2ffe8;color:#0a7a2f;}
+    .desc{color:#666;font-size:13px;line-height:1.45;margin:8px auto 14px;max-width:640px;text-align:center;}
+    .inputWrap{max-width:640px;margin:0 auto 10px;text-align:center;}
+    input.token{width:100%;font-size:26px;padding:14px 14px;border-radius:14px;border:2px solid #ddd;text-align:center;letter-spacing:.08em;box-sizing:border-box;outline:none;}
+    input.token:focus{border-color:#111;}
+    .status{text-align:center;margin-top:10px;font-size:18px;font-weight:900;}
+    .ok{color:#0a7a2f;}
+    .ng{color:#b00020;}
+    .meta{margin-top:10px;color:#666;font-size:12px;line-height:1.5;word-break:break-all;text-align:center;}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-weight:700;}
+    .hr{height:1px;background:#eee;margin:12px 0;}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>割引チェック</h1>
-    <div id="status">送信中…</div>
+    <h1>割引チェック（スタッフ用）<span id="lockBadge" class="badge locked">LOCKED</span></h1>
+
+    <div class="desc">
+      まずPINを入力してスタッフモードを解除してください。<br>
+      解除されていない状態でお客様がQRを読み込んでも、<strong>送信はされません</strong>。
+    </div>
+
+    <div class="row">
+      <input id="pin" class="pin mono" inputmode="numeric" autocomplete="off" placeholder="PIN" />
+      <button id="unlockBtn" class="btn">解除</button>
+      <button id="lockBtn" class="btn secondary">ロック</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="desc">
+      解除後は、<strong>お客様のスクショQRをカメラで読むだけ</strong>で自動記録します。<br>
+      （うまくいかない時は下の欄にtokenを貼り付けてもOK）
+    </div>
+
+    <div class="inputWrap">
+      <input id="token" class="token mono" inputmode="latin" autocomplete="off" placeholder="token（6文字）" />
+      <button class="btn" id="sendBtn" style="width:100%;max-width:640px;margin-top:10px;">手動送信</button>
+    </div>
+
+    <div class="status" id="status">待機中</div>
     <div class="meta" id="meta"></div>
   </div>
 
   <script>
-    // --- 受け取り：redeem.html?c=TOKEN ---
-    const p = new URLSearchParams(location.search);
-    const token = (p.get("c") || "").trim();
+    // スタッフ用（2/24）
+    // - redeem.html?c=TOKEN を開いたとき、スタッフ解除済みなら自動送信
+    // - 未解除なら送信しない（お客様が読んでも安全）
 
-    // tokenは "uid(5) + spot(2)" の7文字想定
-    const uid = token.slice(0, 5);
-    const spot = token.slice(5, 7);
+    const STAFF_PIN = "2468"; // ★現場用に変更OK（共有しない）
+    const STAFF_KEY = "otoniwa_staff_ok_v1";
 
-    // --- あなたのGoogleフォーム（formResponse） ---
     const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
-
-    // entry番号（uid / spot）
-    const entryUid = "1204145842";
+    const entryUid  = "1204145842";
     const entrySpot = "192461526";
 
-    // 表示
-    document.getElementById("meta").innerHTML =
-      `token: <span class="mono">${token || "(none)"}</span><br>` +
-      `uid: <span class="mono">${uid || "(none)"}</span> / spot: <span class="mono">${spot || "(none)"}</span>`;
+    const tokenRe = /^[0-9A-Z]{4}[a-z0-9]{2}$/i;
 
-    // バリデーション
-    const isValid =
-      token.length === 7 &&
-      /^[a-z0-9]{5}[a-z0-9]{2}$/i.test(token);
+    const elPin = document.getElementById("pin");
+    const elUnlockBtn = document.getElementById("unlockBtn");
+    const elLockBtn = document.getElementById("lockBtn");
+    const elBadge = document.getElementById("lockBadge");
 
-    if (!isValid) {
-      document.getElementById("status").innerHTML =
-        `<span class="ng">NG：コードが不正です</span><br>（tokenは7文字のはず）`;
-    } else {
-      // 送信URL（GETビーコン）
+    const elToken = document.getElementById("token");
+    const elStatus = document.getElementById("status");
+    const elMeta = document.getElementById("meta");
+    const elBtn = document.getElementById("sendBtn");
+
+    let isSending = false;
+
+    const spotNameMap = {st:"stage",en:"entrance",dr:"drink",br:"bar",md:"merch",fl:"floor",uk:"unknown"};
+
+    function isStaffUnlocked(){ return localStorage.getItem(STAFF_KEY) === "1"; }
+    function setStaffUnlocked(v){
+      localStorage.setItem(STAFF_KEY, v ? "1" : "0");
+      renderLockState();
+    }
+    function renderLockState(){
+      const unlocked = isStaffUnlocked();
+      elBadge.textContent = unlocked ? "UNLOCKED" : "LOCKED";
+      elBadge.className = "badge " + (unlocked ? "unlocked" : "locked");
+    }
+
+    function parseToken(raw){
+      const token = (raw || "").trim();
+      if (token.length !== 6) return { token, valid:false };
+      if (!tokenRe.test(token)) return { token, valid:false };
+      const uid = token.slice(0,4);
+      const spot = token.slice(4,6).toLowerCase();
+      return { token, uid, spot, valid:true };
+    }
+
+    function setStatus(text, cls){
+      elStatus.className = "status " + (cls || "");
+      elStatus.textContent = text;
+    }
+
+    function submitToken(tokenRaw){
+      if (isSending) return;
+
+      const { token, uid, spot, valid } = parseToken(tokenRaw);
+
+      elMeta.innerHTML =
+        `token: <span class="mono">${token || "(none)"}</span><br>` +
+        `uid: <span class="mono">${uid || "(none)"}</span> / spot: <span class="mono">${spot || "(none)"}</span>` +
+        (spot ? `（${spotNameMap[spot] || spot}）` : "");
+
+      if (!valid){
+        setStatus("NG：コードが不正です（6文字 token）", "ng");
+        return;
+      }
+      if (!isStaffUnlocked()){
+        setStatus("未解除：送信していません（スタッフモードを解除してください）", "ng");
+        return;
+      }
+
+      isSending = true;
+      elBtn.disabled = true;
+      setStatus("送信中…", "");
+
       const url =
-        `${formBase}` +
-        `?entry.${entryUid}=${encodeURIComponent(uid)}` +
+        `${formBase}?entry.${entryUid}=${encodeURIComponent(uid)}` +
         `&entry.${entrySpot}=${encodeURIComponent(spot)}`;
 
       const img = new Image();
-      img.onload = () => {
-        document.getElementById("status").innerHTML =
-          `<span class="ok">OK：記録しました</span><br>割引適用してOK`;
+      const done = () => {
+        setStatus("OK：記録しました → スプシで重複確認して割引適用", "ok");
+        isSending = false;
+        elBtn.disabled = false;
+        elToken.value = "";
+        elToken.focus();
       };
-      img.onerror = () => {
-        // Googleフォームは成功でもonerrorになることがあるので、実運用はスプシ確認が確実
-        document.getElementById("status").innerHTML =
-          `<span class="ok">送信しました</span><br>スプレッドシートに反映を確認してください`;
-      };
+      img.onload = done;
+      img.onerror = done;
       img.src = url;
     }
+
+    elUnlockBtn.addEventListener("click", () => {
+      const pin = (elPin.value || "").trim();
+      if (pin === STAFF_PIN){
+        setStaffUnlocked(true);
+        setStatus("スタッフモード解除しました", "ok");
+        elPin.value = "";
+        elToken.focus();
+      }else{
+        setStatus("PINが違います", "ng");
+      }
+    });
+
+    elLockBtn.addEventListener("click", () => {
+      setStaffUnlocked(false);
+      setStatus("ロックしました", "");
+      elPin.focus();
+    });
+
+    elToken.addEventListener("input", () => {
+      const v = elToken.value.trim();
+      if (v.length >= 6){
+        submitToken(v.slice(0,6));
+      }else{
+        setStatus("待機中", "");
+      }
+    });
+
+    elBtn.addEventListener("click", () => submitToken(elToken.value));
+
+    function getTokenFromQuery(){
+      const p = new URLSearchParams(location.search);
+      return (p.get("c") || "").trim();
+    }
+
+    window.addEventListener("load", () => {
+      renderLockState();
+
+      const qToken = getTokenFromQuery();
+      if (qToken){
+        elToken.value = qToken;
+        if (isStaffUnlocked()){
+          submitToken(qToken);
+        }else{
+          setStatus("スタッフ未解除：送信していません（解除してから再度読み取り）", "ng");
+        }
+      }else{
+        if (isStaffUnlocked()){
+          elToken.focus();
+        }else{
+          elPin.focus();
+        }
+      }
+    });
   </script>
 </body>
 </html>
