@@ -20,6 +20,11 @@
       margin: 0 auto;
       box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
+    #staffQR {
+　　  width: 100%;
+  　　max-width: 360px;
+  　　height: auto;
+　　}
     h1 {
       font-size: 22px;
       margin-bottom: 8px;
@@ -66,7 +71,7 @@
 
   <div class="qr">
     <p><small>※ スタッフが読み取ります（お客様は操作不要）</small></p>
-    <img id="staffQR" width="200" height="200">
+    <img id="staffQR" alt="staff code">
   </div>
 
   <p><small>この画面は再発行できません</small></p>
@@ -84,19 +89,20 @@
     localStorage.setItem("otoniwa_uid", uid);
   }
 
-  // ✅ あなたのフォーム（formResponse）
-  const logUrlBase = "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
+  // スタッフが開く短いURL（バーコードにする中身）
+　const redeemUrl = `https://nakanakaly.github.io/otoniwa-checkin/redeem.html?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
 
   // ✅ entry番号を反映（uid / spot）
   const logUrl =
     `${logUrlBase}?entry.1204145842=${encodeURIComponent(uid)}&entry.192461526=${encodeURIComponent(spot)}`;
 
-  // QR生成
+  // バーコード生成
   document.getElementById("staffQR").src =
   "https://barcode.tec-it.com/barcode.ashx" +
-  "?data=" + encodeURIComponent(logUrl) +
+  "?data=" + encodeURIComponent(redeemUrl) +
   "&code=Code128" +
   "&translate-esc=on";
+
 </script>
 
 
