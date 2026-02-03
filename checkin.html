@@ -4,40 +4,137 @@
   <meta charset="UTF-8">
   <title>次回ドリンク割引</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    :root{--bg:#f6f6f6;--card:#ffffff;--text:#111;--muted:#777;--accent:#fff3cd;--radius:28px;}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:var(--bg);margin:0;padding:18px 14px 28px;color:var(--text);text-align:center;}
+    :root{
+      --bg:#f6f6f6;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#777;
+      --accent:#fff3cd;
+      --radius:28px;
+    }
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+      background:var(--bg);
+      margin:0;
+      padding:16px 12px 22px; /* 少し詰める */
+      color:var(--text);
+      text-align:center;
+    }
     .wrap{max-width:640px;margin:0 auto;}
-    .card{background:var(--card);border-radius:var(--radius);padding:28px 22px 26px;box-shadow:0 10px 30px rgba(0,0,0,.07);}
-    .title{display:flex;align-items:center;justify-content:center;gap:10px;font-size:28px;font-weight:900;letter-spacing:.02em;margin:6px 0 14px;}
-    .badge{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:#ffe97a;box-shadow:0 6px 16px rgba(0,0,0,.08);font-size:18px;}
-    .sub{font-size:22px;font-weight:900;margin:0 0 20px;}
-    .lead{font-size:22px;font-weight:900;line-height:1.45;margin:10px 0 18px;}
-    .note{background:var(--accent);border-radius:14px;padding:18px 16px;margin:18px 0 18px;font-size:20px;font-weight:900;line-height:1.45;}
-    .note .small{display:block;font-size:18px;font-weight:800;margin-bottom:8px;}
-    .muted{color:var(--muted);font-size:18px;font-weight:700;margin:14px 0 8px;}
-    .qr{width:100%;max-width:420px;height:auto;margin:12px auto 0;display:block;}
-    .codeBig{font-size:40px;font-weight:900;letter-spacing:.06em;margin:10px 0 2px;}
-    .codeLine{color:#666;font-size:18px;margin:0 0 18px;}
-    .footer{color:#888;font-size:20px;font-weight:800;margin-top:10px;}
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:22px 18px 20px; /* 少し詰める */
+      box-shadow:0 10px 30px rgba(0,0,0,.07);
+    }
+    .title{
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      font-size:26px;font-weight:900;letter-spacing:.02em;margin:4px 0 10px;
+    }
+    .badge{
+      width:32px;height:32px;border-radius:10px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:#ffe97a;box-shadow:0 6px 16px rgba(0,0,0,.08);
+      font-size:18px;
+    }
+    .sub{font-size:20px;font-weight:900;margin:0 0 12px;}
+    .lead{
+      font-size:20px;           /* 22→20 */
+      font-weight:900;
+      line-height:1.4;
+      margin:6px 0 10px;        /* 詰める */
+    }
+    .note{
+      background:var(--accent);
+      border-radius:14px;
+      padding:14px 14px;        /* 詰める */
+      margin:10px 0 10px;       /* 詰める */
+      font-size:18px;           /* 20→18 */
+      font-weight:900;
+      line-height:1.45;
+    }
+    .note .small{
+      display:block;
+      font-size:16px;
+      font-weight:800;
+      margin-bottom:6px;
+    }
+    .muted{
+      color:var(--muted);
+      font-size:16px;
+      font-weight:700;
+      margin:8px 0 6px;         /* 詰める */
+    }
+
+    /* code表示（QRの上に置く） */
+    .codeBig{
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:.08em;
+      margin:10px 0 2px;
+    }
+    .codeLine{
+      color:#666;
+      font-size:16px;
+      font-weight:800;
+      margin:0 0 8px;           /* QRとの距離 */
+    }
+
+    /* QRは小さめにして「1スクショに収める」 */
+    .qr{
+      width:100%;
+      max-width:300px;          /* 420→300 */
+      height:auto;
+      margin:6px auto 0;
+      display:block;
+    }
+
+    /* 小さい画面（iPhone SE / mini）保険 */
+    @media (max-height: 700px) {
+      .qr{max-width:260px;}
+      .title{font-size:24px;}
+      .lead{font-size:19px;}
+      .note{font-size:17px;}
+      .codeBig{font-size:32px;}
+    }
+
+    .footer{
+      color:#888;
+      font-size:18px;
+      font-weight:800;
+      margin-top:10px;
+    }
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="card">
       <div class="title"><span class="badge">🎫</span><span>次回ドリンク割引</span></div>
+
       <div class="sub">2/24 LIVE 再来場特典</div>
-      <div class="lead">この画面を<br>スクリーンショットして保存してください。</div>
+
+      <div class="lead">
+        この画面を<br>スクリーンショットして保存してください。
+      </div>
+
       <div class="note">
         <span class="small">2/24の来場時に</span>
         この画面を見せると<span>限定1回</span><br>
         <span>ドリンク割引</span>が使えます 🍺
       </div>
+
       <div class="muted">※ スタッフが読み取ります（お客様は操作不要）</div>
-      <img id="qr" class="qr" alt="スタッフ読み取り用QR">
+
+      <!-- ★ code をQRの上に移動 -->
       <div class="codeBig mono" id="codeBig">----</div>
       <div class="codeLine" id="codeLine">code: ----</div>
+
+      <img id="qr" class="qr" alt="スタッフ読み取り用QR">
+
       <div class="footer">この画面は再発行できません</div>
     </div>
   </div>
@@ -53,21 +150,34 @@
     let spot = (params.get("spot") || "uk").toLowerCase();
     spot = spot.replace(/[^a-z0-9]/g, "").slice(0, 2);
 
-    const spotNameMap = {st:"stage",en:"entrance",dr:"drink",br:"bar",md:"merch",fl:"floor",uk:"unknown"};
+    const spotNameMap = {
+      st: "stage",
+      en: "entrance",
+      dr: "drink",
+      br: "bar",
+      md: "merch",
+      fl: "floor",
+      uk: "unknown"
+    };
     const spotName = spotNameMap[spot] || spot;
 
-    const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    // uid：4文字（読み間違いしづらい）
+    const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 0,1,I,Oを避ける
     const rand4 = () => {
       let s = "";
       for (let i = 0; i < 4; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
       return s;
     };
     const uid = rand4();
+
+    // token：6文字
     const token = `${uid}${spot}`;
 
+    // redeem URL（同一オリジン想定：GitHub PagesでOK）
     const base = location.origin + location.pathname.replace(/[^\/]+$/, "");
     const redeemUrl = `${base}redeem.html?c=${encodeURIComponent(token)}`;
 
+    // QR表示（tec-it）
     const qr = document.getElementById("qr");
     qr.src =
       "https://barcode.tec-it.com/barcode.ashx" +
@@ -75,6 +185,7 @@
       "&code=QRCode" +
       "&translate-esc=on";
 
+    // 表示（見た目は小文字寄せ）
     document.getElementById("codeBig").textContent = uid.toLowerCase();
     document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-${spotName}`;
   </script>
