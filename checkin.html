@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>次回ドリンク割引</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -42,101 +43,73 @@
       margin: 16px 0;
       font-size: 14px;
     }
-    .qr {
-      margin-top: 20px;
-    }
     small {
+      color: #666;
+      font-size: 12px;
+    }
+    #debug {
+      margin-top: 10px;
       color: #666;
       font-size: 12px;
     }
   </style>
 </head>
+
 <body>
+  <div class="card">
+    <h1>🎫 次回ドリンク割引</h1>
 
-<div class="card">
-  <h1>🎫 次回ドリンク割引</h1>
+    <div class="event">
+      2/24 LIVE 再来場特典
+    </div>
 
-  <div class="event">
-    2/24 LIVE 再来場特典
-  </div>
+    <p>
+      この画面を<br>
+      <strong>スクリーンショットして保存</strong>してください。
+    </p>
 
-  <p>
-    この画面を<br>
-    <strong>スクリーンショットして保存</strong>してください。
-  </p>
+    <div class="notice">
+      2/24の来場時に<br>
+      この画面を見せると<strong>限定1回</strong><br>
+      <strong>ドリンク割引</strong>が使えます 🍺
+    </div>
 
-  <div class="notice">
-    2/24の来場時に<br>
-    この画面を見せると<strong>限定1回</strong><br>
-    <strong>ドリンク割引</strong>が使えます 🍺
-  </div>
-
-  <div class="qr">
     <p><small>※ スタッフが読み取ります（お客様は操作不要）</small></p>
     <img id="staffQR" alt="staff code">
+
+    <div id="debug"></div>
+
+    <p><small>この画面は再発行できません</small></p>
   </div>
 
-  <p><small>この画面は再発行できません</small></p>
-</div>
-
-<script>
-  // spot（設置場所）を取得
   <script>
-  // URLパラメータ取得
-  const params = new URLSearchParams(window.location.search);
+    // ① spotはURLの値をそのまま使う（コード変更不要）
+    // 例: checkin.html?spot=st  / ?spot=en  / ?spot=dr  / ?spot=ch
+    const params = new URLSearchParams(window.location.search);
+    const spot = (params.get("spot") || "uk").slice(0, 12); // 長すぎ事故防止（最大12文字）
 
-  // --- ① spotを短縮 ---
-  const spotMap = {
-    stage: "st",
-    entrance: "en",
-    drink: "dr",
-    changeover: "ch"
-  };
-  const spotRaw = params.get("spot") || "unknown";
-  const spot = spotMap[spotRaw] || "uk"; // uk = unknown
+    // ② uidは端末に保存（6文字）
+    let uid = localStorage.getItem("otoniwa_uid");
+    if (!uid) {
+      uid = Math.random().toString(36).substring(2, 8); // 6文字
+      localStorage.setItem("otoniwa_uid", uid);
+    }
 
-  // --- ② uidを短縮（6文字） ---
-  let uid = localStorage.getItem("otoniwa_uid");
-  if (!uid) {
-    uid = Math.random().toString(36).substring(2, 8); // ← 6文字
-    localStorage.setItem("otoniwa_uid", uid);
-  }
+    // ③ スタッフが読むURL（短いほどバーコードが太くなる）
+    const redeemUrl =
+      "https://nakanakaly.github.io/otoniwa-checkin/redeem.html" +
+      `?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
 
-  // --- ③ スタッフ読み取り用URL ---
-  const redeemUrl =
-    `https://nakanakaly.github.io/otoniwa-checkin/redeem.html` +
-    `?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
+    // ④ バーコード生成（Code128）
+    const img = document.getElementById("staffQR");
+    img.src =
+      "https://barcode.tec-it.com/barcode.ashx" +
+      "?data=" + encodeURIComponent(redeemUrl) +
+      "&code=Code128" +
+      "&translate-esc=on";
 
-  // --- ④ バーコード生成（Code128） ---
-  const img = document.getElementById("staffQR");
-  img.src =
-    "https://barcode.tec-it.com/barcode.ashx" +
-    "?data=" + encodeURIComponent(redeemUrl) +
-    "&code=Code128" +
-    "&translate-esc=on";
-</script>
-
-
-  // 匿名ID（端末単位）
-  let uid = localStorage.getItem("otoniwa_uid");
-  if (!uid) {
-    uid = Math.random().toString(36).substring(2, 10);
-    localStorage.setItem("otoniwa_uid", uid);
-  }
-
-  // スタッフが開く短いURL（バーコードにする中身）
-  const redeemUrl = `https://nakanakaly.github.io/otoniwa-checkin/redeem.html?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
-
-  // バーコード生成（Code128）
-  const img = document.getElementById("staffQR");
-  img.src =
-    "https://barcode.tec-it.com/barcode.ashx" +
-    "?data=" + encodeURIComponent(redeemUrl) +
-    "&code=Code128" +
-    "&translate-esc=on";
-</script>
-
-
-
+    // ⑤ 目視確認（現場で事故りにくい）
+    document.getElementById("debug").textContent = `code: ${uid}-${spot}`;
+  </script>
 </body>
 </html>
