@@ -65,7 +65,7 @@
   </div>
 
   <div class="qr">
-    <p><small>※ スタッフ読み取り用</small></p>
+    <p><small>※ スタッフが読み取ります（お客様は操作不要）</small></p>
     <img id="staffQR" width="200" height="200">
   </div>
 
@@ -93,8 +93,10 @@
 
   // QR生成
   document.getElementById("staffQR").src =
-    "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
-    encodeURIComponent(logUrl);
+  "https://barcode.tec-it.com/barcode.ashx" +
+  "?data=" + encodeURIComponent(logUrl) +
+  "&code=Code128" +
+  "&translate-esc=on";
 </script>
 
 
