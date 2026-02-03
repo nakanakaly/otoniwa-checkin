@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>割引適用（スタッフ用）</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; background:#f7f7f7; margin:0; padding:20px; }
+    .card { background:#fff; border-radius:16px; padding:18px; max-width:420px; margin:0 auto; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+    h1 { font-size:18px; margin:0 0 10px; }
+    label { display:block; font-size:12px; color:#666; margin-top:12px; }
+    input, select, button { width:100%; font-size:16px; padding:12px; margin-top:6px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; }
+    button { border:none; font-weight:700; background:#111; color:#fff; margin-top:14px; }
+    .ok { color:#0a7a2f; font-weight:700; margin-top:12px; }
+    .note { font-size:12px; color:#666; margin-top:10px; line-height:1.5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>割引適用（スタッフ用）</h1>
+
+    <label>spot（設置場所）</label>
+    <select id="spot">
+      <option value="stage">stage</option>
+      <option value="entrance">entrance</option>
+      <option value="drink">drink</option>
+      <option value="changeover">changeover</option>
+      <option value="other">other</option>
+    </select>
+
+    <label>uid（バーコード読み取り結果）</label>
+    <input id="uid" placeholder="例：5mj6ku">
+
+    <button id="send">記録して割引OK</button>
+
+    <div id="msg" class="ok" style="display:none;">送信しました（スプシで確認）</div>
+
+    <div class="note">
+      手順：iPhoneでバーコードを読む → 結果をコピー → ここに貼り付け → ボタン
+    </div>
+  </div>
+
+  <script>
+    // Googleフォーム（formResponse）
+    const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
+
+    // entry番号（uid / spot）
+    const entryUid = "1204145842";
+    const entrySpot = "192461526";
+
+    document.getElementById("send").addEventListener("click", () => {
+      const uid = document.getElementById("uid").value.trim();
+      const spot = document.getElementById("spot").value;
+      if (!uid) return alert("uidを入れてね");
+
+      const url = `${formBase}?entry.${entryUid}=${encodeURIComponent(uid)}&entry.${entrySpot}=${encodeURIComponent(spot)}`;
+
+      // 送信（GETビーコン）
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        document.getElementById("msg").style.display = "block";
+        setTimeout(() => (document.getElementById("msg").style.display = "none"), 1500);
+        document.getElementById("uid").value = "";
+        document.getElementById("uid").focus();
+      };
+      img.src = url;
+    });
+  </script>
+</body>
+</html>
