@@ -100,16 +100,17 @@
       "https://nakanakaly.github.io/otoniwa-checkin/redeem.html" +
       `?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
 
-    // ④ バーコード生成（Code128）
+    // ④ バーコード生成（Code128）— 中身は uid だけ
     const img = document.getElementById("staffQR");
     img.src =
       "https://barcode.tec-it.com/barcode.ashx" +
-      "?data=" + encodeURIComponent(redeemUrl) +
+      "?data=" + encodeURIComponent(uid) +
       "&code=Code128" +
       "&translate-esc=on";
-
-    // ⑤ 目視確認（現場で事故りにくい）
+    
+    // ⑤ 目視確認（任意）
     document.getElementById("debug").textContent = `code: ${uid}-${spot}`;
+
   </script>
 </body>
 </html>
