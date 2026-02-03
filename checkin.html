@@ -84,17 +84,19 @@
     localStorage.setItem("otoniwa_uid", uid);
   }
 
-  // ★ここを後でGoogleフォームURLに差し替える
-  const logUrlBase = "https://docs.google.com/forms/d/e/XXXX/formResponse";
+  // ✅ あなたのフォーム（formResponse）
+  const logUrlBase = "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
 
+  // ✅ entry番号を反映（uid / spot）
   const logUrl =
-    `${logUrlBase}?entry.UID=${uid}&entry.SPOT=${spot}`;
+    `${logUrlBase}?entry.1204145842=${encodeURIComponent(uid)}&entry.192461526=${encodeURIComponent(spot)}`;
 
   // QR生成
   document.getElementById("staffQR").src =
     "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
     encodeURIComponent(logUrl);
 </script>
+
 
 </body>
 </html>
