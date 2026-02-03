@@ -21,10 +21,12 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
     #staffQR {
-　　  width: 100%;
-  　　max-width: 360px;
-  　　height: auto;
-　　}
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      margin: 12px auto 0;
+    }
     h1 {
       font-size: 22px;
       margin-bottom: 8px;
@@ -90,20 +92,17 @@
   }
 
   // スタッフが開く短いURL（バーコードにする中身）
-　const redeemUrl = `https://nakanakaly.github.io/otoniwa-checkin/redeem.html?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
+  const redeemUrl = `https://nakanakaly.github.io/otoniwa-checkin/redeem.html?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
 
-  // ✅ entry番号を反映（uid / spot）
-  const logUrl =
-    `${logUrlBase}?entry.1204145842=${encodeURIComponent(uid)}&entry.192461526=${encodeURIComponent(spot)}`;
-
-  // バーコード生成
-  document.getElementById("staffQR").src =
-  "https://barcode.tec-it.com/barcode.ashx" +
-  "?data=" + encodeURIComponent(redeemUrl) +
-  "&code=Code128" +
-  "&translate-esc=on";
-
+  // バーコード生成（Code128）
+  const img = document.getElementById("staffQR");
+  img.src =
+    "https://barcode.tec-it.com/barcode.ashx" +
+    "?data=" + encodeURIComponent(redeemUrl) +
+    "&code=Code128" +
+    "&translate-esc=on";
 </script>
+
 
 
 </body>
