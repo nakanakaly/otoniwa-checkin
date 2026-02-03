@@ -81,8 +81,41 @@
 
 <script>
   // spot（設置場所）を取得
+  <script>
+  // URLパラメータ取得
   const params = new URLSearchParams(window.location.search);
-  const spot = params.get("spot") || "unknown";
+
+  // --- ① spotを短縮 ---
+  const spotMap = {
+    stage: "st",
+    entrance: "en",
+    drink: "dr",
+    changeover: "ch"
+  };
+  const spotRaw = params.get("spot") || "unknown";
+  const spot = spotMap[spotRaw] || "uk"; // uk = unknown
+
+  // --- ② uidを短縮（6文字） ---
+  let uid = localStorage.getItem("otoniwa_uid");
+  if (!uid) {
+    uid = Math.random().toString(36).substring(2, 8); // ← 6文字
+    localStorage.setItem("otoniwa_uid", uid);
+  }
+
+  // --- ③ スタッフ読み取り用URL ---
+  const redeemUrl =
+    `https://nakanakaly.github.io/otoniwa-checkin/redeem.html` +
+    `?u=${encodeURIComponent(uid)}&s=${encodeURIComponent(spot)}`;
+
+  // --- ④ バーコード生成（Code128） ---
+  const img = document.getElementById("staffQR");
+  img.src =
+    "https://barcode.tec-it.com/barcode.ashx" +
+    "?data=" + encodeURIComponent(redeemUrl) +
+    "&code=Code128" +
+    "&translate-esc=on";
+</script>
+
 
   // 匿名ID（端末単位）
   let uid = localStorage.getItem("otoniwa_uid");
