@@ -5,14 +5,27 @@
 <title>割引チェック（スタッフ用）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#f6f6f6;margin:0;padding:14px;}
-  .card{background:#fff;border-radius:22px;padding:16px;max-width:640px;margin:auto;box-shadow:0 10px 30px rgba(0,0,0,.07);}
-  h1{text-align:center;font-size:18px;}
-  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:900;font-size:12px;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+    background:#f6f6f6;
+    margin:0;padding:14px;
+  }
+  .card{
+    background:#fff;border-radius:22px;padding:16px;
+    max-width:640px;margin:auto;
+    box-shadow:0 10px 30px rgba(0,0,0,.07);
+  }
+  h1{text-align:center;font-size:18px;margin-bottom:6px;}
+  .badge{
+    display:inline-block;padding:4px 10px;border-radius:999px;
+    font-weight:900;font-size:12px;
+  }
   .locked{background:#ffe1e1;color:#7b0010;}
   .unlocked{background:#e2ffe8;color:#0a7a2f;}
   .row{display:flex;gap:8px;margin:8px 0;}
-  input,button{font-size:16px;padding:10px;border-radius:12px;border:1px solid #ccc;}
+  input,button{
+    font-size:16px;padding:10px;border-radius:12px;border:1px solid #ccc;
+  }
   button{background:#111;color:#fff;font-weight:900;}
   .status{text-align:center;font-weight:900;margin-top:10px;}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
@@ -26,22 +39,32 @@
     <span id="badge" class="badge locked">LOCKED</span>
   </h1>
 
+  <!-- PIN解除 -->
   <div class="row">
     <input id="pin" placeholder="PIN">
     <button onclick="unlock()">解除</button>
+  </div>
+
+  <!-- 手動入力（保険） -->
+  <div class="row">
+    <input id="tokenInput" class="mono" placeholder="token（6文字）">
+    <button onclick="manualSend()">手動送信</button>
   </div>
 
   <div class="status" id="status">待機中</div>
 </div>
 
 <script>
-  const STAFF_PIN = "0831"; // ★変更済みPIN
+  /* ===== 設定 ===== */
+  const STAFF_PIN = "0831"; // ★あなたが設定したPIN
   const STAFF_KEY = "otoniwa_staff";
 
-  const formBase = "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
-  const entryUid = "1204145842";
-  const entrySpot = "192461526";
-  const entryIssued = "987654321"; // ★スプシに追加した列のentry番号
+  // ★ここは「実際のGoogleフォームの値」に必ず合わせる
+  const formBase =
+    "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
+  const entryUid     = "1204145842";
+  const entrySpot    = "192461526";
+  const entryIssued  = "XXXXXXXXXX"; // ← ★追加した「獲得時刻」欄の entry
 
   const badge = document.getElementById("badge");
   const status = document.getElementById("status");
@@ -50,45 +73,65 @@
     return localStorage.getItem(STAFF_KEY)==="1";
   }
   function render(){
-    badge.textContent = unlocked()?"UNLOCKED":"LOCKED";
+    badge.textContent = unlocked() ? "UNLOCKED" : "LOCKED";
     badge.className = "badge " + (unlocked()?"unlocked":"locked");
   }
   function unlock(){
-    if(document.getElementById("pin").value===STAFF_PIN){
+    if(document.getElementById("pin").value === STAFF_PIN){
       localStorage.setItem(STAFF_KEY,"1");
-      status.textContent="スタッフモード解除";
+      status.textContent = "スタッフモード解除";
       render();
+    }else{
+      status.textContent = "PINが違います";
     }
   }
 
   function send(token, t){
-    if(!unlocked()) return;
+    if(!unlocked()){
+      status.textContent = "未解除：送信されていません";
+      return;
+    }
+
+    if(!token || token.length < 6){
+      status.textContent = "tokenが不正です";
+      return;
+    }
 
     const uid = token.slice(0,4);
     const spot = token.slice(4,6);
 
-    // base36 → Unix分 → Date
+    // base36 → Date
     const issuedMin = parseInt(t,36);
-    const issuedAt = new Date(issuedMin*60000);
+    const issuedAt = new Date(issuedMin * 60000);
     const issuedStr =
       `${issuedAt.getFullYear()}/${issuedAt.getMonth()+1}/${issuedAt.getDate()} ` +
       `${issuedAt.getHours()}:${String(issuedAt.getMinutes()).padStart(2,"0")}`;
 
     const url =
-      `${formBase}?entry.${entryUid}=${uid}` +
-      `&entry.${entrySpot}=${spot}` +
+      `${formBase}?entry.${entryUid}=${encodeURIComponent(uid)}` +
+      `&entry.${entrySpot}=${encodeURIComponent(spot)}` +
       `&entry.${entryIssued}=${encodeURIComponent(issuedStr)}`;
 
-    const img=new Image();
-    img.onload=img.onerror=()=>status.textContent="OK：記録しました";
-    img.src=url;
+    const img = new Image();
+    img.onload = img.onerror = () => {
+      status.textContent = "OK：記録しました";
+      document.getElementById("tokenInput").value = "";
+    };
+    img.src = url;
   }
 
-  render();
+  function manualSend(){
+    const token = document.getElementById("tokenInput").value.trim();
+    const p = new URLSearchParams(location.search);
+    const t = p.get("t"); // URLにtがなければ undefined
+    send(token, t);
+  }
 
-  const p=new URLSearchParams(location.search);
-  const c=p.get("c");
-  const t=p.get("t");
+  /* URLから来た場合（自動送信） */
+  render();
+  const p = new URLSearchParams(location.search);
+  const c = p.get("c");
+  const t = p.get("t");
   if(c && t){
     send(c,t);
   }
