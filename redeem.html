@@ -2,31 +2,18 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>割引チェック（スタッフ用）</title>
+<title>無料ドリンクチェック（スタッフ用）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-    background:#f6f6f6;
-    margin:0;padding:14px;
-  }
-  .card{
-    background:#fff;border-radius:22px;padding:16px;
-    max-width:640px;margin:auto;
-    box-shadow:0 10px 30px rgba(0,0,0,.07);
-  }
-  h1{text-align:center;font-size:18px;margin-bottom:6px;}
-  .badge{
-    display:inline-block;padding:4px 10px;border-radius:999px;
-    font-weight:900;font-size:12px;
-  }
+  body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#f6f6f6;margin:0;padding:14px;}
+  .card{background:#fff;border-radius:22px;padding:16px;max-width:640px;margin:auto;box-shadow:0 10px 30px rgba(0,0,0,.07);}
+  h1{text-align:center;font-size:18px;margin:0 0 8px;}
+  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:900;font-size:12px;}
   .locked{background:#ffe1e1;color:#7b0010;}
   .unlocked{background:#e2ffe8;color:#0a7a2f;}
   .row{display:flex;gap:8px;margin:8px 0;}
-  input,button{
-    font-size:16px;padding:10px;border-radius:12px;border:1px solid #ccc;
-  }
-  button{background:#111;color:#fff;font-weight:900;}
+  input,button{font-size:16px;padding:10px;border-radius:12px;border:1px solid #ccc;}
+  button{background:#111;color:#fff;font-weight:900;border:0;}
   .status{text-align:center;font-weight:900;margin-top:10px;}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
 </style>
@@ -35,17 +22,15 @@
 <body>
 <div class="card">
   <h1>
-    割引チェック
+    無料ドリンクチェック
     <span id="badge" class="badge locked">LOCKED</span>
   </h1>
 
-  <!-- PIN解除 -->
   <div class="row">
     <input id="pin" placeholder="PIN">
     <button onclick="unlock()">解除</button>
   </div>
 
-  <!-- 手動入力（保険） -->
   <div class="row">
     <input id="tokenInput" class="mono" placeholder="token（6文字）">
     <button onclick="manualSend()">手動送信</button>
@@ -56,25 +41,27 @@
 
 <script>
   /* ===== 設定 ===== */
-  const STAFF_PIN = "0831"; // ★あなたが設定したPIN
+  const STAFF_PIN = "0831";          // ←あなたのPIN
   const STAFF_KEY = "otoniwa_staff";
 
-  // ★ここは「実際のGoogleフォームの値」に必ず合わせる
   const formBase =
     "https://docs.google.com/forms/d/e/1FAIpQLSe3zl2YbX6H35hMf3Qh9ORsGgJwMUAcSf9JkgAwmOMpt0i_mA/formResponse";
-  const entryUid     = "1204145842";
-  const entrySpot    = "192461526";
-  const entryIssued  = "34493101"; // ← ★追加した「獲得時刻」欄の entry
+
+  // 既存
+  const entryUid    = "1204145842";
+  const entrySpot   = "192461526";
+  const entryIssued = "34493101";    // ←あなたが取れた「獲得時刻」のentry
+
+  // ★追加：紹介者uid（4文字）用の質問をフォームに作ってentryを取る
+  const entryRef    = "XXXXXXXXXX";  // ←ここを差し替え
 
   const badge = document.getElementById("badge");
   const status = document.getElementById("status");
 
-  function unlocked(){
-    return localStorage.getItem(STAFF_KEY)==="1";
-  }
+  function unlocked(){ return localStorage.getItem(STAFF_KEY)==="1"; }
   function render(){
     badge.textContent = unlocked() ? "UNLOCKED" : "LOCKED";
-    badge.className = "badge " + (unlocked()?"unlocked":"locked");
+    badge.className = "badge " + (unlocked() ? "unlocked" : "locked");
   }
   function unlock(){
     if(document.getElementById("pin").value === STAFF_PIN){
@@ -86,31 +73,36 @@
     }
   }
 
-  function send(token, t){
-    if(!unlocked()){
-      status.textContent = "未解除：送信されていません";
-      return;
-    }
+  const pad2 = (n) => String(n).padStart(2,"0");
+  function issuedStrFromT(t){
+    const issuedMin = parseInt(t,36);
+    const d = new Date(issuedMin * 60000);
+    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
 
-    if(!token || token.length < 6){
-      status.textContent = "tokenが不正です";
-      return;
-    }
+  function cleanRef(v){
+    return (v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
+  }
+
+  function send(token, t, r){
+    if(!unlocked()){ status.textContent="未解除：送信されていません"; return; }
+    if(!token || token.length < 6){ status.textContent="tokenが不正です"; return; }
+    if(!t){ status.textContent="t（獲得時刻）がありません"; return; }
 
     const uid = token.slice(0,4);
     const spot = token.slice(4,6);
+    const issuedStr = issuedStrFromT(t);
+    const ref = cleanRef(r);
 
-    // base36 → Date
-    const issuedMin = parseInt(t,36);
-    const issuedAt = new Date(issuedMin * 60000);
-    const issuedStr =
-      `${issuedAt.getFullYear()}/${issuedAt.getMonth()+1}/${issuedAt.getDate()} ` +
-      `${issuedAt.getHours()}:${String(issuedAt.getMinutes()).padStart(2,"0")}`;
-
-    const url =
+    let url =
       `${formBase}?entry.${entryUid}=${encodeURIComponent(uid)}` +
       `&entry.${entrySpot}=${encodeURIComponent(spot)}` +
       `&entry.${entryIssued}=${encodeURIComponent(issuedStr)}`;
+
+    // refがあるときだけ送る（質問を作ってentryRefを入れた後）
+    if(ref && entryRef !== "XXXXXXXXXX"){
+      url += `&entry.${entryRef}=${encodeURIComponent(ref)}`;
+    }
 
     const img = new Image();
     img.onload = img.onerror = () => {
@@ -123,17 +115,20 @@
   function manualSend(){
     const token = document.getElementById("tokenInput").value.trim();
     const p = new URLSearchParams(location.search);
-    const t = p.get("t"); // URLにtがなければ undefined
-    send(token, t);
+    const t = p.get("t");
+    const r = p.get("r");
+    send(token, t, r);
   }
 
-  /* URLから来た場合（自動送信） */
   render();
+
+  // URLから来た場合は自動送信
   const p = new URLSearchParams(location.search);
   const c = p.get("c");
   const t = p.get("t");
+  const r = p.get("r"); // 紹介者uid（任意）
   if(c && t){
-    send(c,t);
+    send(c, t, r);
   }
 </script>
 </body>
