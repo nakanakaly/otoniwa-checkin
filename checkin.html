@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>次回ドリンク割引</title>
+  <title>次回ドリンク無料</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -18,65 +18,119 @@
     .card{
       background:#fff;
       border-radius:26px;
-      padding:20px 16px 18px;
+      padding:18px 16px 16px;
       box-shadow:0 10px 30px rgba(0,0,0,.07);
     }
-    .title{
-      font-size:24px;
-      font-weight:900;
-      margin-bottom:6px;
-    }
-    .sub{font-size:18px;font-weight:900;margin-bottom:6px;}
-    .lead{font-size:18px;font-weight:900;margin:4px 0 6px;}
+    .title{font-size:24px;font-weight:900;margin:0 0 6px;}
+    .sub{font-size:17px;font-weight:900;margin:0 0 6px;}
+    .lead{font-size:17px;font-weight:900;margin:4px 0 6px;line-height:1.25;}
     .note{
       background:#fff3cd;
       border-radius:14px;
-      padding:12px;
-      font-size:16px;
+      padding:11px 12px;
+      font-size:15px;
       font-weight:900;
-      margin:6px 0;
+      margin:6px 0 6px;
       line-height:1.35;
     }
-    .muted{font-size:14px;color:#666;margin:4px 0;}
+    .muted{font-size:13px;color:#666;margin:4px 0;}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
     .codeBig{
-      font-size:30px;
+      font-size:28px;
       font-weight:900;
       letter-spacing:.08em;
       margin:8px 0 0;
     }
-    .codeLine{
-      font-size:14px;
-      font-weight:800;
-      color:#666;
-      margin-bottom:6px;
+    .codeLine{font-size:13px;font-weight:800;color:#666;margin:0 0 6px;}
+    .refLine{
+      font-size:13px;
+      font-weight:900;
+      margin:2px 0 8px;
+    }
+    .refLine span{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#eef3ff;
+    }
+    .refBox{
+      background:#f3f3f3;
+      border-radius:14px;
+      padding:10px 10px;
+      margin:8px 0 6px;
+      text-align:left;
+      font-size:13px;
+      font-weight:900;
+    }
+    .refRow{
+      display:flex;
+      gap:8px;
+      margin-top:6px;
+    }
+    input{
+      flex:1;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid #ccc;
+      font-size:16px;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:0;
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      font-size:15px;
     }
     .qr{
       width:100%;
-      max-width:260px;
+      max-width:250px;
       margin:4px auto 0;
       display:block;
     }
-    .footer{font-size:14px;color:#888;margin-top:6px;}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .footer{font-size:13px;color:#888;margin-top:6px;}
+
+    @media (max-height: 700px) {
+      .title{font-size:23px;}
+      .lead{font-size:16px;}
+      .note{font-size:14px; padding:10px 11px;}
+      .codeBig{font-size:26px;}
+      .qr{max-width:235px;}
+      input{font-size:15px;}
+    }
   </style>
 </head>
 
 <body>
 <div class="wrap">
   <div class="card">
-    <div class="title">🎫 次回ドリンク割引</div>
-    <div class="sub">2/24 LIVE 再来場特典</div>
+    <div class="title">🥤 次回ドリンク無料</div>
+    <div class="sub">2/24 LIVE 特典</div>
     <div class="lead">この画面をスクショ保存してください</div>
 
     <div class="note">
       2/24来場時にこの画面を見せると<br>
-      <strong>ドリンク割引（1回）</strong>が使えます 🍺
+      <strong>ドリンク1杯無料（1回）</strong> 🍺<br>
+      さらに、<strong>友達を連れてきたら友達も1杯無料</strong>
     </div>
 
-    <div class="muted">※ スタッフが読み取ります</div>
+    <div class="muted">※ スタッフが読み取ります（お客様は操作不要）</div>
 
     <div class="codeBig mono" id="codeBig">----</div>
     <div class="codeLine" id="codeLine">code: ----</div>
+
+    <!-- 紹介コード（＝この人のuid） -->
+    <div class="refLine">あなたの紹介コード：<span class="mono" id="myRef">----</span></div>
+
+    <!-- 友達（新規）向け：紹介コード入力（任意） -->
+    <div class="refBox">
+      友達に誘われた人は、紹介コード（4文字）を入力して「反映」してね
+      <div class="refRow">
+        <input id="refInput" class="mono" placeholder="例：abcd" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <button id="applyBtn" type="button">反映</button>
+      </div>
+    </div>
 
     <img id="qr" class="qr" alt="スタッフ読み取り用QR">
     <div class="footer">この画面は再発行できません</div>
@@ -84,9 +138,8 @@
 </div>
 
 <script>
-  // spot（2文字）
   const params = new URLSearchParams(location.search);
-  let spot = (params.get("spot") || "uk").toLowerCase().slice(0,2);
+  let spot = (params.get("spot") || "uk").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,2);
 
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   const rand4 = () => {
@@ -95,6 +148,7 @@
     return s;
   };
 
+  // この人自身のuid（紹介コードにも使う）
   const uid = rand4();
   const token = uid + spot;
 
@@ -102,17 +156,44 @@
   const issuedMin = Math.floor(Date.now() / 60000);
   const t = issuedMin.toString(36);
 
+  // 紹介者（友達のuid）入力：任意
+  const cleanRef = (v) => (v || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g,"")
+    .slice(0,4);
+
+  let ref = cleanRef(params.get("ref") || ""); // URLでも渡せるように保険
+
+  // redeem URL（r=紹介者uid を載せる：空なら付けない）
   const base = location.origin + location.pathname.replace(/[^\/]+$/, "");
-  const redeemUrl =
-    `${base}redeem.html?c=${encodeURIComponent(token)}&t=${t}`;
 
-  document.getElementById("qr").src =
-    "https://barcode.tec-it.com/barcode.ashx" +
-    "?data=" + encodeURIComponent(redeemUrl) +
-    "&code=QRCode";
+  function buildRedeemUrl(){
+    const u = new URL(base + "redeem.html");
+    u.searchParams.set("c", token);
+    u.searchParams.set("t", t);
+    if(ref) u.searchParams.set("r", ref);
+    return u.toString();
+  }
 
-  document.getElementById("codeBig").textContent = uid.toLowerCase();
-  document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-${spot}`;
+  function render(){
+    document.getElementById("codeBig").textContent = uid.toLowerCase();
+    document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-${spot}`;
+    document.getElementById("myRef").textContent = uid.toLowerCase();
+
+    const redeemUrl = buildRedeemUrl();
+    document.getElementById("qr").src =
+      "https://barcode.tec-it.com/barcode.ashx" +
+      "?data=" + encodeURIComponent(redeemUrl) +
+      "&code=QRCode";
+  }
+
+  // ボタンでref反映（QRを作り直す）
+  document.getElementById("applyBtn").addEventListener("click", () => {
+    ref = cleanRef(document.getElementById("refInput").value);
+    render();
+  });
+
+  render();
 </script>
 </body>
 </html>
