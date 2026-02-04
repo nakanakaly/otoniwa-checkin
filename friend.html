@@ -23,6 +23,7 @@
     }
     .title{font-size:22px;font-weight:900;margin:0 0 8px;}
     .lead{font-size:16px;font-weight:900;margin:4px 0 8px;line-height:1.35;}
+
     .box{
       background:#f3f3f3;
       border-radius:14px;
@@ -51,7 +52,9 @@
       font-weight:900;
       font-size:15px;
     }
+
     .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+
     .note{
       background:#fff3cd;
       border-radius:14px;
@@ -90,27 +93,40 @@
 <body>
 <div class="wrap">
   <div class="card">
+    <!-- ▼ ① タイトル＋説明文 修正 -->
     <div class="title">🎟 紹介で来た人：無料ドリンク</div>
-    <div class="lead">紹介コード（4文字）を入れて<br>自分のQRを出してスクショしてね</div>
+    <div class="lead">
+      紹介コード（4文字）を入れて<br>
+      スタッフに見せてね
+    </div>
 
+    <!-- 紹介コード入力 -->
     <div class="box">
-      紹介してくれた人の「紹介コード（4文字）」を入力して「発行」<br>
-      → 出てきたQRをスタッフに見せると <strong>1杯無料</strong>
+      紹介してくれた人の<br>
+      「紹介コード（4文字）」を入力してください
       <div class="row">
-        <input id="refInput" class="mono" placeholder="例：6nx8" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input id="refInput" class="mono" placeholder="例：6nx8" maxlength="4"
+               inputmode="text" autocomplete="off" autocapitalize="characters">
         <button id="issueBtn" type="button">発行</button>
       </div>
     </div>
 
+    <!-- 結果表示 -->
     <div id="result" style="display:none;">
+      <!-- ▼ ② 「スクショ保存してね」を削除した黄色枠 -->
       <div class="note">
-        この画面をスクショ保存してね<br>
-        <strong>ドリンク1杯無料（1回）</strong> 🍺
+        ドリンク1杯無料（1回） 🍺
       </div>
 
       <div class="muted">※スタッフが読み取ります</div>
-      <div class="muted">紹介コード：<span class="pill mono" id="refShown">----</span></div>
-      <div class="muted">スタッフ確認用：<span class="pill mono" id="codeLine">code: ----</span></div>
+      <div class="muted">
+        紹介コード：
+        <span class="pill mono" id="refShown">----</span>
+      </div>
+      <div class="muted">
+        スタッフ確認用：
+        <span class="pill mono" id="codeLine">code: ----</span>
+      </div>
 
       <img id="qr" class="qr" alt="スタッフ読み取り用QR">
       <div class="footer">この画面は再発行できません</div>
@@ -119,12 +135,6 @@
 </div>
 
 <script>
-  const params = new URLSearchParams(location.search);
-  let spot = (params.get("spot") || "uk")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g,"")
-    .slice(0,2);
-
   const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
   const rand4 = () => {
     let s = "";
@@ -138,25 +148,25 @@
     .slice(0,4);
 
   function issue(ref){
-    // 新規来場者自身のuid
+    // 新規来場者のuid
     const uid = rand4();
-    const token = uid + spot;
+    const token = uid + "dr"; // 紹介はドリンクカウンター固定
 
-    // 発行時刻（Unix分→base36）
+    // 発行時刻（Unix分 → base36）
     const issuedMin = Math.floor(Date.now() / 60000);
     const t = issuedMin.toString(36);
 
-    // redeem URL（紹介者uidは r= で渡す）
+    // redeem URL（紹介者uidを r= で渡す）
     const base = location.origin + location.pathname.replace(/[^\/]+$/, "");
     const u = new URL(base + "redeem.html");
     u.searchParams.set("c", token);
     u.searchParams.set("t", t);
-    u.searchParams.set("r", ref); // ★紹介者uid（4文字）
+    u.searchParams.set("r", ref);
     const redeemUrl = u.toString();
 
     // 表示
     document.getElementById("refShown").textContent = ref.toLowerCase();
-    document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-${spot}`;
+    document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-dr`;
     document.getElementById("qr").src =
       "https://barcode.tec-it.com/barcode.ashx" +
       "?data=" + encodeURIComponent(redeemUrl) +
@@ -168,7 +178,7 @@
   document.getElementById("issueBtn").addEventListener("click", () => {
     const ref = cleanRef(document.getElementById("refInput").value);
     if(ref.length !== 4){
-      alert("紹介コード（4文字）を入れてね");
+      alert("紹介コード（4文字）を入力してください");
       return;
     }
     issue(ref);
