@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>紹介で来た人：無料ドリンク</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+      background:#f6f6f6;
+      margin:0;
+      padding:14px 12px 18px;
+      text-align:center;
+      color:#111;
+    }
+    .wrap{max-width:640px;margin:0 auto;}
+    .card{
+      background:#fff;
+      border-radius:26px;
+      padding:18px 16px 16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.07);
+    }
+    .title{font-size:22px;font-weight:900;margin:0 0 8px;}
+    .lead{font-size:16px;font-weight:900;margin:4px 0 8px;line-height:1.35;}
+    .box{
+      background:#f3f3f3;
+      border-radius:14px;
+      padding:12px;
+      text-align:left;
+      font-size:14px;
+      font-weight:900;
+      line-height:1.35;
+      margin:10px 0 10px;
+    }
+    .row{display:flex;gap:8px;margin-top:8px;}
+    input{
+      flex:1;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid #ccc;
+      font-size:16px;
+      font-weight:900;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:0;
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      font-size:15px;
+    }
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+    .note{
+      background:#fff3cd;
+      border-radius:14px;
+      padding:11px 12px;
+      font-size:14px;
+      font-weight:900;
+      margin:10px 0 8px;
+      line-height:1.35;
+    }
+    .pill{
+      display:inline-block;
+      padding:3px 10px;
+      border-radius:999px;
+      background:#eef3ff;
+      font-weight:900;
+    }
+    .qr{
+      width:100%;
+      max-width:250px;
+      margin:6px auto 0;
+      display:block;
+    }
+    .muted{font-size:13px;color:#666;margin:6px 0;}
+    .footer{font-size:13px;color:#888;margin-top:6px;}
+
+    @media (max-height: 700px) {
+      .title{font-size:21px;}
+      .lead{font-size:15px;}
+      .box{font-size:13px; padding:11px;}
+      .note{font-size:13px; padding:10px 11px;}
+      .qr{max-width:235px;}
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">🎟 紹介で来た人：無料ドリンク</div>
+    <div class="lead">紹介コード（4文字）を入れて<br>自分のQRを出してスクショしてね</div>
+
+    <div class="box">
+      紹介してくれた人の「紹介コード（4文字）」を入力して「発行」<br>
+      → 出てきたQRをスタッフに見せると <strong>1杯無料</strong>
+      <div class="row">
+        <input id="refInput" class="mono" placeholder="例：6nx8" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <button id="issueBtn" type="button">発行</button>
+      </div>
+    </div>
+
+    <div id="result" style="display:none;">
+      <div class="note">
+        この画面をスクショ保存してね<br>
+        <strong>ドリンク1杯無料（1回）</strong> 🍺
+      </div>
+
+      <div class="muted">※スタッフが読み取ります</div>
+      <div class="muted">紹介コード：<span class="pill mono" id="refShown">----</span></div>
+      <div class="muted">スタッフ確認用：<span class="pill mono" id="codeLine">code: ----</span></div>
+
+      <img id="qr" class="qr" alt="スタッフ読み取り用QR">
+      <div class="footer">この画面は再発行できません</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  let spot = (params.get("spot") || "uk")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g,"")
+    .slice(0,2);
+
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const rand4 = () => {
+    let s = "";
+    for(let i=0;i<4;i++) s += alphabet[Math.floor(Math.random()*alphabet.length)];
+    return s;
+  };
+
+  const cleanRef = (v) => (v || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g,"")
+    .slice(0,4);
+
+  function issue(ref){
+    // 新規来場者自身のuid
+    const uid = rand4();
+    const token = uid + spot;
+
+    // 発行時刻（Unix分→base36）
+    const issuedMin = Math.floor(Date.now() / 60000);
+    const t = issuedMin.toString(36);
+
+    // redeem URL（紹介者uidは r= で渡す）
+    const base = location.origin + location.pathname.replace(/[^\/]+$/, "");
+    const u = new URL(base + "redeem.html");
+    u.searchParams.set("c", token);
+    u.searchParams.set("t", t);
+    u.searchParams.set("r", ref); // ★紹介者uid（4文字）
+    const redeemUrl = u.toString();
+
+    // 表示
+    document.getElementById("refShown").textContent = ref.toLowerCase();
+    document.getElementById("codeLine").textContent = `code: ${uid.toLowerCase()}-${spot}`;
+    document.getElementById("qr").src =
+      "https://barcode.tec-it.com/barcode.ashx" +
+      "?data=" + encodeURIComponent(redeemUrl) +
+      "&code=QRCode";
+
+    document.getElementById("result").style.display = "block";
+  }
+
+  document.getElementById("issueBtn").addEventListener("click", () => {
+    const ref = cleanRef(document.getElementById("refInput").value);
+    if(ref.length !== 4){
+      alert("紹介コード（4文字）を入れてね");
+      return;
+    }
+    issue(ref);
+  });
+</script>
+</body>
+</html>
